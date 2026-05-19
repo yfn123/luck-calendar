@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>好运日历 · 完整版</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #FF8C42;
+            --primary-dark: #E76F2D;
+            --primary-light: #FFB06A;
+            --secondary: #FFD166;
+            --accent: #E76F51;
+            --bg: #FFF9F0;
+            --bg-deep: #FFF3E0;
+            --card-bg: #FFFFFF;
+            --text-main: #2D2D2D;
+            --text-sub: #8B8B8B;
+            --shadow-sm: 0 8px 20px rgba(0, 0, 0, 0.04);
+            --shadow-md: 0 12px 28px rgba(0, 0, 0, 0.08);
+            --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.12);
+            --shadow-glow: 0 8px 24px rgba(255, 140, 66, 0.25);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif;
+            background: linear-gradient(180deg, var(--bg) 0%, var(--bg-deep) 100%);
+            color: var(--text-main);
+            max-width: 430px;
+            margin: 0 auto;
+            min-height: 100vh;
+            position: relative;
+            padding-bottom: 80px;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeInScale {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .page {
+            display: none;
+            padding: 20px 20px 30px;
+            animation: fadeInUp 0.4s ease-out;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        /* 首页样式 */
+        .hero-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 320px;
+            background: linear-gradient(135deg, #FF8C42 0%, #FFB06A 40%, #FFD166 100%);
+            border-radius: 0 0 40px 40px;
+            z-index: 0;
+        }
+
+        .user-section {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding-top: 8px;
+        }
+
+        .user-greeting {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            padding: 10px 18px;
+            border-radius: 30px;
+            color: white;
+        }
+
+        .greeting-text { font-size: 14px; opacity: 0.9; }
+        .user-name { font-size: 18px; font-weight: 700; margin-top: 2px; }
+
+        .badge-group { display: flex; gap: 10px; }
+        .level-badge, .sign-badge {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            padding: 8px 14px;
+            border-radius: 30px;
+            color: white;
+            font-size: 13px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+        }
+        .sign-badge:active { transform: scale(0.96); }
+
+        .time-card {
+            position: relative;
+            z-index: 2;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 32px;
+            padding: 20px 24px;
+            margin-bottom: 24px;
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .current-time { font-size: 42px; font-weight: 700; color: var(--primary-dark); }
+        .current-date { font-size: 15px; color: var(--text-sub); margin-top: 8px; }
+        .weather-info { background: #FFF3E0; padding: 10px 18px; border-radius: 28px; text-align: right; }
+        .weather-temp { font-size: 24px; font-weight: 700; color: var(--primary-dark); }
+        .weather-desc { font-size: 12px; color: var(--text-sub); }
+
+        .destiny-ring {
+            position: relative;
+            z-index: 2;
+            background: var(--card-bg);
+            border-radius: 36px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow-md);
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .ring-progress { width: 80px; height: 80px; position: relative; }
+        .ring-progress svg { width: 80px; height: 80px; transform: rotate(-90deg); }
+        .ring-progress circle { fill: none; stroke-width: 8; stroke-linecap: round; }
+        .ring-progress circle:first-child { stroke: #F0E6D2; }
+        .ring-progress circle:last-child { stroke: url(#gradient); stroke-dasharray: 226; }
+        .ring-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; }
+        .ring-value { font-size: 24px; font-weight: 800; color: var(--primary); }
+        .ring-label { font-size: 10px; color: var(--text-sub); }
+
+        .destiny-details { flex: 1; display: flex; justify-content: space-around; }
+        .destiny-item { text-align: center; }
+        .destiny-number { font-size: 28px; font-weight: 800; color: var(--primary); }
+        .destiny-color { display: inline-block; width: 32px; height: 32px; border-radius: 12px; margin-bottom: 4px; }
+        .destiny-direction { font-size: 24px; }
+        .destiny-label { font-size: 11px; color: var(--text-sub); margin-top: 4px; }
+
+        .quote-glass {
+            position: relative;
+            z-index: 2;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            border-radius: 28px;
+            padding: 20px 24px;
+            margin-bottom: 20px;
+        }
+        .quote-text { font-size: 16px; font-weight: 500; line-height: 1.5; }
+        .quote-author { font-size: 12px; color: var(--text-sub); margin-top: 12px; text-align: right; }
+
+        .feature-grid {
+            position: relative;
+            z-index: 2;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .feature-item {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 14px 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: var(--shadow-sm);
+        }
+        .feature-item:active { transform: scale(0.96); background: var(--secondary); }
+        .feature-icon { font-size: 28px; margin-bottom: 6px; }
+        .feature-name { font-size: 12px; font-weight: 500; }
+
+        .fortune-card {
+            position: relative;
+            z-index: 2;
+            background: linear-gradient(135deg, #FF8C42 0%, #FF6B3D 100%);
+            border-radius: 28px;
+            padding: 24px;
+            margin-bottom: 20px;
+            color: white;
+            cursor: pointer;
+        }
+        .fortune-text { font-size: 18px; font-weight: 600; margin: 12px 0 16px; }
+        .fortune-btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 30px;
+            color: white;
+            cursor: pointer;
+        }
+
+        .refresh-btn {
+            position: relative;
+            z-index: 2;
+            width: 100%;
+            padding: 14px;
+            background: rgba(255,255,255,0.8);
+            border: 1px solid rgba(255,140,66,0.3);
+            border-radius: 40px;
+            color: var(--primary);
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        /* ========== 星座页面 ========== */
+        .zodiac-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 28px;
+            padding: 20px;
+            color: white;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .zodiac-selector {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+        .zodiac-item {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 12px 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: var(--shadow-sm);
+        }
+        .zodiac-item.active {
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: white;
+        }
+        .zodiac-icon { font-size: 32px; margin-bottom: 6px; }
+        .zodiac-name { font-size: 13px; font-weight: 500; }
+        .zodiac-detail-card {
+            background: var(--card-bg);
+            border-radius: 28px;
+            padding: 24px;
+            margin-bottom: 16px;
+        }
+        .fortune-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 16px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .fortune-label { color: var(--text-sub); font-size: 14px; }
+        .fortune-value { font-weight: 600; color: var(--primary); }
+
+        /* ========== 黄历页面 ========== */
+        .lunar-header {
+            background: linear-gradient(135deg, #d4a373, #faedcd);
+            border-radius: 28px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .lunar-date { font-size: 24px; font-weight: 700; margin-bottom: 8px; }
+        .solar-date { font-size: 14px; opacity: 0.8; }
+        .almanac-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        .almanac-card {
+            background: var(--card-bg);
+            border-radius: 24px;
+            padding: 20px;
+            text-align: center;
+        }
+        .almanac-card.good { border-left: 4px solid #52c41a; }
+        .almanac-card.bad { border-left: 4px solid #ff4d4f; }
+        .almanac-title { font-size: 14px; color: var(--text-sub); margin-bottom: 12px; }
+        .almanac-content { font-size: 16px; font-weight: 600; line-height: 1.6; }
+        .other-info {
+            background: var(--card-bg);
+            border-radius: 24px;
+            padding: 20px;
+        }
+        .info-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #f0f0f0; }
+
+        /* ========== 锦囊页面 ========== */
+        .daily-jinang {
+            background: linear-gradient(135deg, #f5e6d3, #f0dbb2);
+            border-radius: 28px;
+            padding: 28px;
+            margin-bottom: 24px;
+            text-align: center;
+        }
+        .jinang-icon { font-size: 48px; margin-bottom: 12px; }
+        .jinang-text { font-size: 18px; font-weight: 600; line-height: 1.5; margin: 16px 0; }
+        .category-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .jinang-category {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .jinang-category:active { transform: scale(0.97); }
+        .category-icon { font-size: 36px; margin-bottom: 10px; }
+        .category-name { font-weight: 600; margin-bottom: 8px; }
+        .category-tip { font-size: 13px; color: var(--text-sub); }
+
+        /* ========== 许愿页面 ========== */
+        .wish-header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+        .wish-input-area {
+            background: var(--card-bg);
+            border-radius: 28px;
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+        .wish-textarea {
+            width: 100%;
+            padding: 16px;
+            border: 1px solid #f0f0f0;
+            border-radius: 20px;
+            font-size: 15px;
+            resize: none;
+            margin-bottom: 16px;
+        }
+        .wish-submit {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: white;
+            border: none;
+            border-radius: 30px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .wish-list-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin: 20px 0 12px;
+        }
+        .wish-item {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 16px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .wish-content { flex: 1; }
+        .wish-date { font-size: 11px; color: var(--text-sub); margin-top: 4px; }
+        .wish-delete {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: #ccc;
+        }
+
+        /* 底部导航和通用组件 */
+        .tab-bar {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 430px;
+            background: rgba(255,255,255,0.96);
+            backdrop-filter: blur(20px);
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 16px 20px;
+            border-top: 1px solid rgba(255,140,66,0.15);
+            z-index: 1000;
+        }
+        .tab-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 8px 16px;
+            cursor: pointer;
+            color: var(--text-sub);
+            border-radius: 30px;
+        }
+        .tab-item.active { color: var(--primary); background: rgba(255,140,66,0.1); }
+        .tab-icon { font-size: 22px; margin-bottom: 4px; }
+        .tab-label { font-size: 11px; font-weight: 500; }
+
+        .fab {
+            position: fixed;
+            bottom: 90px;
+            right: 20px;
+            width: 52px;
+            height: 52px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            border-radius: 50%;
+            color: white;
+            font-size: 26px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 6px 20px rgba(255,140,66,0.5);
+            cursor: pointer;
+            z-index: 100;
+        }
+        .fab:active { transform: scale(0.92); }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(8px);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal.show { display: flex; }
+        .modal-content {
+            background: white;
+            border-radius: 40px;
+            padding: 32px;
+            text-align: center;
+            max-width: 300px;
+            width: 85%;
+        }
+        .modal-btn {
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: white;
+            border: none;
+            padding: 12px 28px;
+            border-radius: 30px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(45,45,45,0.9);
+            backdrop-filter: blur(12px);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 40px;
+            font-size: 13px;
+            z-index: 3000;
+            opacity: 0;
+            transition: opacity 0.2s;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+        .toast.show { opacity: 1; }
+
+        svg defs linearGradient stop:first-child { stop-color: #FF8C42; }
+        svg defs linearGradient stop:last-child { stop-color: #FF6B3D; }
+    </style>
+</head>
+<body>
+
+<!-- 首页 -->
+<div id="page-home" class="page active">
+    <div class="hero-bg"></div>
+    <div class="user-section">
+        <div class="user-greeting"><div class="greeting-text" id="greetingText">🌞 早安</div><div class="user-name">小 明</div></div>
+        <div class="badge-group">
+            <div class="level-badge">⭐ LV.3</div>
+            <div class="sign-badge" id="signBadge">🔥 <span id="signCount">7天</span></div>
+        </div>
+    </div>
+    <div class="time-card">
+        <div><div class="current-time" id="liveClock">--:--</div><div class="current-date" id="liveDate"></div></div>
+        <div class="weather-info"><div class="weather-temp" id="weatherTemp">--°</div><div class="weather-desc" id="weatherDesc">加载中</div></div>
+    </div>
+    <div class="destiny-ring">
+        <div class="ring-progress"><svg><defs><linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#FF8C42"/><stop offset="100%" stop-color="#FF6B3D"/></linearGradient></defs><circle cx="40" cy="40" r="36" stroke="#F0E6D2"/><circle cx="40" cy="40" r="36" stroke="url(#gradient)" stroke-dasharray="226" stroke-dashoffset="50"/></svg><div class="ring-center"><div class="ring-value" id="luckPercent">78%</div><div class="ring-label">好运指数</div></div></div>
+        <div class="destiny-details"><div class="destiny-item"><div class="destiny-number" id="luckNumber">8</div><div class="destiny-label">幸运数字</div></div><div class="destiny-item"><div class="destiny-color" id="luckColorBox" style="background:#FF69B4"></div><div class="destiny-label" id="luckColorText">粉色</div></div><div class="destiny-item"><div class="destiny-direction" id="luckDirectionIcon">➡️</div><div class="destiny-label" id="luckDirectionText">正东</div></div></div>
+    </div>
+    <div class="quote-glass"><div class="quote-text" id="quoteText">✨ 加载中...</div><div class="quote-author" id="quoteAuthor">每日一言</div></div>
+    <div class="feature-grid">
+        <div class="feature-item" onclick="switchToPage('zodiac')"><div class="feature-icon">♈</div><div class="feature-name">星座</div></div>
+        <div class="feature-item" onclick="switchToPage('almanac')"><div class="feature-icon">📖</div><div class="feature-name">黄历</div></div>
+        <div class="feature-item" onclick="switchToPage('jinang')"><div class="feature-icon">🎁</div><div class="feature-name">锦囊</div></div>
+        <div class="feature-item" onclick="switchToPage('wish')"><div class="feature-icon">✨</div><div class="feature-name">许愿</div></div>
+    </div>
+    <div class="fortune-card" id="fortuneCard"><div class="fortune-text" id="fortuneText">今天适合主动沟通，会遇到意想不到的好事哦！</div><button class="fortune-btn" id="drawFortuneBtn">抽一支签 →</button></div>
+    <button class="refresh-btn" id="refreshBtn">🔄 刷新运势与天气</button>
+</div>
+
+<!-- 星座页面 -->
+<div id="page-zodiac" class="page">
+    <div class="zodiac-header"><div class="zodiac-header-icon" style="font-size:48px;">✨</div><div style="font-size:20px;font-weight:700;">今日星座运势</div><div style="font-size:13px;opacity:0.9;">查看你的专属运势</div></div>
+    <div class="zodiac-selector" id="zodiacSelector"></div>
+    <div id="zodiacDetail"></div>
+</div>
+
+<!-- 黄历页面 -->
+<div id="page-almanac" class="page">
+    <div class="lunar-header" id="lunarHeader"><div class="lunar-date" id="lunarDate">甲辰年 四月十七</div><div class="solar-date" id="solarDate">2026年5月17日</div></div>
+    <div class="almanac-grid"><div class="almanac-card good"><div class="almanac-title">🌿 宜</div><div class="almanac-content" id="goodThings">祭祀 祈福 出行</div></div><div class="almanac-card bad"><div class="almanac-title">⚠️ 忌</div><div class="almanac-content" id="badThings">嫁娶 入宅 开市</div></div></div>
+    <div class="other-info"><div class="info-row"><span>🐉 冲煞</span><span id="chongsha">冲鼠(甲子) · 煞北</span></div><div class="info-row"><span>📍 胎神</span><span id="taishen">占门床 房床</span></div><div class="info-row"><span>⭐ 吉神</span><span id="jishen">天德 月德 三合</span></div><div class="info-row"><span>💀 凶神</span><span id="xiongshen">小耗 五虚</span></div></div>
+</div>
+
+<!-- 锦囊页面 -->
+<div id="page-jinang" class="page">
+    <div class="daily-jinang" id="dailyJinang"><div class="jinang-icon">🎁</div><div class="jinang-text" id="dailyJinangText">今日锦囊：主动沟通，会有意外收获</div><div style="font-size:13px;opacity:0.7;">⭐ 基于今日运势生成 ⭐</div></div>
+    <div class="category-grid"><div class="jinang-category" data-type="career"><div class="category-icon">💼</div><div class="category-name">事业锦囊</div><div class="category-tip" id="careerTip">点击查看详情</div></div><div class="jinang-category" data-type="love"><div class="category-icon">💕</div><div class="category-name">爱情锦囊</div><div class="category-tip" id="loveTip">点击查看详情</div></div><div class="jinang-category" data-type="wealth"><div class="category-icon">💰</div><div class="category-name">财富锦囊</div><div class="category-tip" id="wealthTip">点击查看详情</div></div><div class="jinang-category" data-type="health"><div class="category-icon">🏃</div><div class="category-name">健康锦囊</div><div class="category-tip" id="healthTip">点击查看详情</div></div></div>
+    <button class="refresh-btn" id="refreshJinangBtn" style="margin-top:0;">🔄 刷新锦囊</button>
+</div>
+
+<!-- 许愿页面 -->
+<div id="page-wish" class="page">
+    <div class="wish-header"><div style="font-size:48px;">✨</div><div style="font-size:22px;font-weight:700;margin:8px 0;">许愿池</div><div style="font-size:14px;color:var(--text-sub);">写下心愿，累积好运</div></div>
+    <div class="wish-input-area"><textarea class="wish-textarea" id="wishInput" placeholder="写下你的愿望...&#10;&#10;✨ 愿所有美好如期而至 ✨" rows="3"></textarea><button class="wish-submit" id="submitWishBtn">🌟 许下心愿 🌟</button></div>
+    <div class="wish-list-title">📋 我的许愿清单</div>
+    <div id="wishList"></div>
+</div>
+
+<!-- 底部导航 -->
+<div class="tab-bar"><div class="tab-item active" data-page="home"><div class="tab-icon">📅</div><div class="tab-label">首页</div></div><div class="tab-item" data-page="zodiac"><div class="tab-icon">♈</div><div class="tab-label">星座</div></div><div class="tab-item" data-page="almanac"><div class="tab-icon">📖</div><div class="tab-label">黄历</div></div><div class="tab-item" data-page="jinang"><div class="tab-icon">🎁</div><div class="tab-label">锦囊</div></div><div class="tab-item" data-page="wish"><div class="tab-icon">✨</div><div class="tab-label">许愿</div></div></div>
+<div class="fab" onclick="switchToPage('wish')">+</div>
+
+<div id="modal" class="modal"><div class="modal-content"><div class="modal-icon">🎉</div><div class="modal-title">签到成功！</div><div class="modal-desc" id="modalDesc">今日好运值 +10</div><button class="modal-btn" onclick="hideModal()">确 定</button></div></div>
+<div id="toast" class="toast"></div>
+
+<script>
+    // ========== 基础数据 ==========
+    let signCount = parseInt(localStorage.getItem('signCount') || '7');
+    let wishes = JSON.parse(localStorage.getItem('wishes') || '[]');
+    
+    // 星座数据
+    const zodiacs = [
+        { name: '白羊座', icon: '♈', date: '3.21-4.19' },
+        { name: '金牛座', icon: '♉', date: '4.20-5.20' },
+        { name: '双子座', icon: '♊', date: '5.21-6.21' },
+        { name: '巨蟹座', icon: '♋', date: '6.22-7.22' },
+        { name: '狮子座', icon: '♌', date: '7.23-8.22' },
+        { name: '处女座', icon: '♍', date: '8.23-9.22' },
+        { name: '天秤座', icon: '♎', date: '9.23-10.23' },
+        { name: '天蝎座', icon: '♏', date: '10.24-11.22' },
+        { name: '射手座', icon: '♐', date: '11.23-12.21' },
+        { name: '摩羯座', icon: '♑', date: '12.22-1.19' },
+        { name: '水瓶座', icon: '♒', date: '1.20-2.18' },
+        { name: '双鱼座', icon: '♓', date: '2.19-3.20' }
+    ];
+    
+    let currentZodiac = localStorage.getItem('currentZodiac') || '白羊座';
+    
+    // 获取每日种子
+    function getDailySeed() {
+        const today = new Date();
+        return today.getFullYear() * 365 + today.getMonth() * 30 + today.getDate();
+    }
+    
+    // 获取星座运势
+    function getZodiacFortune(zodiacName) {
+        const seed = getDailySeed() + zodiacs.findIndex(z => z.name === zodiacName);
+        const overall = ['⭐', '⭐⭐', '⭐⭐⭐', '⭐⭐⭐⭐', '⭐⭐⭐⭐⭐'][seed % 5];
+        const scores = {
+            overall: overall,
+            love: 40 + (seed % 60),
+            career: 40 + ((seed + 13) % 60),
+            wealth: 40 + ((seed + 27) % 60),
+            health: 40 + ((seed + 41) % 60)
+        };
+        const texts = [
+            "今天运势平稳，适合处理日常事务。",
+            "好事将至！保持积极心态会有意外收获。",
+            "注意人际关系，避免不必要的争执。",
+            "财运不错，可能有小惊喜入账。",
+            "今天适合做出重要决定，运气站在你这边。"
+        ];
+        return { scores, advice: texts[seed % texts.length] };
+    }
+    
+    // 渲染星座选择器
+    function renderZodiacSelector() {
+        let html = '';
+        zodiacs.forEach(z => {
+            html += `<div class="zodiac-item ${currentZodiac === z.name ? 'active' : ''}" onclick="selectZodiac('${z.name}')">
+                        <div class="zodiac-icon">${z.icon}</div>
+                        <div class="zodiac-name">${z.name}</div>
+                    </div>`;
+        });
+        document.getElementById('zodiacSelector').innerHTML = html;
+    }
+    
+    function selectZodiac(name) {
+        currentZodiac = name;
+        localStorage.setItem('currentZodiac', name);
+        renderZodiacSelector();
+        renderZodiacDetail();
+    }
+    
+    function renderZodiacDetail() {
+        const fortune = getZodiacFortune(currentZodiac);
+        const zodiac = zodiacs.find(z => z.name === currentZodiac);
+        const html = `<div class="zodiac-detail-card"><div style="text-align:center;margin-bottom:16px;"><div style="font-size:48px;">${zodiac.icon}</div><div style="font-size:20px;font-weight:700;">${currentZodiac}</div><div style="font-size:12px;color:var(--text-sub);">${zodiac.date}</div></div>
+            <div class="fortune-row"><span class="fortune-label">综合运势</span><span class="fortune-value">${fortune.scores.overall}</span></div>
+            <div class="fortune-row"><span class="fortune-label">💕 爱情运势</span><span class="fortune-value">${fortune.scores.love}%</span></div>
+            <div class="fortune-row"><span class="fortune-label">💼 事业运势</span><span class="fortune-value">${fortune.scores.career}%</span></div>
+            <div class="fortune-row"><span class="fortune-label">💰 财富运势</span><span class="fortune-value">${fortune.scores.wealth}%</span></div>
+            <div class="fortune-row"><span class="fortune-label">🏃 健康运势</span><span class="fortune-value">${fortune.scores.health}%</span></div>
+            <div class="fortune-row"><span class="fortune-label">📝 今日建议</span><span class="fortune-value">${fortune.advice}</span></div></div>`;
+        document.getElementById('zodiacDetail').innerHTML = html;
+    }
+    
+    // 黄历数据
+    function updateAlmanac() {
+        const now = new Date();
+        const seed = getDailySeed();
+        const goods = ['祭祀', '祈福', '求嗣', '开光', '出行', '解除', '移徙', '纳畜', '纳财', '交易'];
+        const bads = ['嫁娶', '入宅', '安床', '作灶', '安葬', '修坟', '开市', '破土'];
+        const chong = ['冲鼠', '冲牛', '冲虎', '冲兔', '冲龙', '冲蛇', '冲马', '冲羊', '冲猴', '冲鸡', '冲狗', '冲猪'];
+        const taishen = ['占门床 房床', '占厨灶 碓磨', '占外西南', '占房内东', '占门炉 床栖'];
+        
+        const goodIdx = seed % goods.length;
+        const badIdx = (seed + 3) % bads.length;
+        
+        document.getElementById('goodThings').innerHTML = `${goods[goodIdx]} ${goods[(goodIdx+1)%goods.length]} ${goods[(goodIdx+2)%goods.length]}`;
+        document.getElementById('badThings').innerHTML = `${bads[badIdx]} ${bads[(badIdx+1)%bads.length]}`;
+        document.getElementById('chongsha').innerHTML = `${chong[seed%chong.length]} · 煞北`;
+        document.getElementById('taishen').innerHTML = taishen[seed%taishen.length];
+        document.getElementById('jishen').innerHTML = ['天德', '月德', '三合', '福星', '天喜'][seed%5];
+        document.getElementById('xiongshen').innerHTML = ['小耗', '五虚', '朱雀', '白虎', '天狗'][seed%5];
+        
+        const lunarMonths = ['正月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '冬月', '腊月'];
+        const lunarDays = ['初一','初二','初三','初四','初五','初六','初七','初八','初九','初十','十一','十二','十三','十四','十五','十六','十七','十八','十九','二十','廿一','廿二','廿三','廿四','廿五','廿六','廿七','廿八','廿九','三十'];
+        document.getElementById('lunarDate').innerHTML = `甲辰年 ${lunarMonths[now.getMonth()]} ${lunarDays[(now.getDate()+seed)%30]}`;
+        document.getElementById('solarDate').innerHTML = `${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日`;
+    }
+    
+    // 锦囊数据
+    const jinangData = {
+        career: ['本周适合复盘规划，制定清晰目标', '主动争取机会，会有意外收获', '避免冲动决策，三思而后行', '团队协作会有突破性进展', '适合学习新技能，提升竞争力'],
+        love: ['主动表达感受，增进彼此理解', '单身者有机会遇到心仪对象', '约会适合去安静的地方', '给彼此一些空间，关系更和谐', '制造小惊喜，感情升温'],
+        wealth: ['谨慎投资，观望为主', '可能会有意外之财，但勿贪心', '适合做财务规划', '避免冲动消费，理性购物', '开源节流，积少成多'],
+        health: ['注意肩颈放松，适当运动', '保证充足睡眠，避免熬夜', '多喝水，注意饮食均衡', '适合户外活动，呼吸新鲜空气', '情绪管理很重要，保持平和']
+    };
+    
+    function updateJinang() {
+        const seed = getDailySeed();
+        document.getElementById('dailyJinangText').innerHTML = `今日锦囊：${['主动沟通会有意外收获', '保持微笑，好运自来', '尝试新事物会有惊喜', '整理思绪，灵感涌现', '联系老朋友，重温旧情'][seed%5]}`;
+        document.getElementById('careerTip').innerHTML = jinangData.career[seed % jinangData.career.length];
+        document.getElementById('loveTip').innerHTML = jinangData.love[(seed+2) % jinangData.love.length];
+        document.getElementById('wealthTip').innerHTML = jinangData.wealth[(seed+4) % jinangData.wealth.length];
+        document.getElementById('healthTip').innerHTML = jinangData.health[(seed+6) % jinangData.health.length];
+    }
+    
+    function showCategoryJinang(type) {
+        const seed = getDailySeed();
+        const texts = { career: jinangData.career, love: jinangData.love, wealth: jinangData.wealth, health: jinangData.health };
+        const names = { career: '事业', love: '爱情', wealth: '财富', health: '健康' };
+        const text = texts[type][seed % texts[type].length];
+        showToast(`✨ ${names[type]}锦囊：${text}`);
+    }
+    
+    // 许愿功能
+    function renderWishList() {
+        if (wishes.length === 0) {
+            document.getElementById('wishList').innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-sub);">✨ 许下你的第一个愿望吧 ✨</div>';
+            return;
+        }
+        let html = '';
+        wishes.slice().reverse().forEach((wish, idx) => {
+            html += `<div class="wish-item"><div class="wish-content"><div>${wish.text}</div><div class="wish-date">${wish.date}</div></div><button class="wish-delete" onclick="deleteWish(${wishes.length - 1 - idx})">🗑️</button></div>`;
+        });
+        document.getElementById('wishList').innerHTML = html;
+    }
+    
+    function addWish(text) {
+        if (!text.trim()) { showToast('请输入愿望内容'); return false; }
+        wishes.push({ text: text.trim(), date: new Date().toLocaleDateString() });
+        localStorage.setItem('wishes', JSON.stringify(wishes));
+        renderWishList();
+        showToast('✨ 心愿已许下，好运正在累积 ✨');
+        return true;
+    }
+    
+    function deleteWish(index) {
+        wishes.splice(index, 1);
+        localStorage.setItem('wishes', JSON.stringify(wishes));
+        renderWishList();
+        showToast('愿望已移除');
+    }
+    
+    // ========== 首页实时功能 ==========
+    function updateClock() {
+        const now = new Date();
+        document.getElementById('liveClock').innerHTML = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+        document.getElementById('liveDate').innerHTML = `${now.getFullYear()}.${now.getMonth()+1}.${now.getDate()} ${['周日','周一','周二','周三','周四','周五','周六'][now.getDay()]}`;
+        const hour = now.getHours();
+        let greeting = hour<6?'🌙 夜深了':hour<9?'🌅 早安':hour<12?'☀️ 上午好':hour<14?'🍜 中午好':hour<18?'📖 下午好':'🌆 晚上好';
+        document.getElementById('greetingText').innerHTML = greeting;
+    }
+    
+    async function fetchWeather() {
+        try {
+            const res = await fetch('https://wttr.in/Beijing?format=j1&lang=zh');
+            const data = await res.json();
+            const current = data.current_condition[0];
+            document.getElementById('weatherTemp').innerHTML = `${current.temp_C}°`;
+            document.getElementById('weatherDesc').innerHTML = current.weatherDesc[0].value.slice(0,4);
+        } catch(e) { document.getElementById('weatherTemp').innerHTML = '--°'; }
+    }
+    
+    async function fetchQuote() {
+        try {
+            const res = await fetch('https://v1.hitokoto.cn/?c=i&c=d&c=k');
+            const data = await res.json();
+            document.getElementById('quoteText').innerHTML = `“ ${data.hitokoto} ”`;
+            document.getElementById('quoteAuthor').innerHTML = `—— ${data.from || '每日一言'} ——`;
+        } catch(e) { document.getElementById('quoteText').innerHTML = '“ 心存美好，万事胜意 ”'; }
+    }
+    
+    function updateHomeLuck() {
+        const seed = getDailySeed();
+        const percent = 60 + (seed % 38);
+        document.getElementById('luckPercent').innerHTML = percent + '%';
+        const luckNumbers = [3,5,6,7,8,9];
+        const luckColors = [{name:'红色',code:'#E74C3C'},{name:'橙色',code:'#FF8C42'},{name:'金色',code:'#F1C40F'},{name:'翠绿',code:'#2ECC71'},{name:'天蓝',code:'#3498DB'},{name:'紫色',code:'#9B59B6'}];
+        const directions = [{name:'正东',icon:'➡️'},{name:'正南',icon:'⬇️'},{name:'正西',icon:'⬅️'},{name:'正北',icon:'⬆️'}];
+        document.getElementById('luckNumber').innerHTML = luckNumbers[seed % luckNumbers.length];
+        document.getElementById('luckColorBox').style.backgroundColor = luckColors[seed % luckColors.length].code;
+        document.getElementById('luckColorText').innerHTML = luckColors[seed % luckColors.length].name;
+        document.getElementById('luckDirectionIcon').innerHTML = directions[seed % directions.length].icon;
+        document.getElementById('luckDirectionText').innerHTML = directions[seed % directions.length].name;
+    }
+    
+    const fortunes = ["今天适合主动沟通，会遇到意想不到的好事！","保持微笑，好运自然来敲门～","尝试新事物，会有惊喜发现！","今天适合整理思绪，灵感涌现","多喝热水，健康就是最大的好运","今天适合联系老朋友，重温旧情","凡事看开一点，烦恼少一点"];
+    function updateFortune() { document.getElementById('fortuneText').innerHTML = fortunes[getDailySeed() % fortunes.length]; }
+    function drawFortune() { document.getElementById('fortuneText').innerHTML = fortunes[Math.floor(Math.random() * fortunes.length)]; showToast('✨ 新运势已生成 ✨'); }
+    
+    async function refreshHome() {
+        const btn = document.getElementById('refreshBtn');
+        btn.innerHTML = '⏳ 刷新中...';
+        await Promise.all([fetchWeather(), fetchQuote()]);
+        updateHomeLuck();
+        btn.innerHTML = '✓ 刷新完成';
+        setTimeout(() => { btn.innerHTML = '🔄 刷新运势与天气'; }, 1500);
+    }
+    
+    function showSignModal() {
+        signCount++;
+        document.getElementById('signCount').innerHTML = signCount + '天';
+        localStorage.setItem('signCount', signCount);
+        document.getElementById('modalDesc').innerHTML = `今日好运值 +10，连续签到 ${signCount} 天！`;
+        document.getElementById('modal').classList.add('show');
+    }
+    
+    function hideModal() { document.getElementById('modal').classList.remove('show'); }
+    function showToast(msg) { const t = document.getElementById('toast'); t.innerHTML = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2000); }
+    
+    function switchToPage(pageName) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById(`page-${pageName}`).classList.add('active');
+        document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+        document.querySelector(`.tab-item[data-page="${pageName}"]`).classList.add('active');
+        if (pageName === 'zodiac') { renderZodiacSelector(); renderZodiacDetail(); }
+        if (pageName === 'almanac') updateAlmanac();
+        if (pageName === 'jinang') updateJinang();
+        if (pageName === 'wish') renderWishList();
+    }
+    
+    // 事件绑定
+    document.getElementById('signBadge').addEventListener('click', showSignModal);
+    document.getElementById('modal').addEventListener('click', e => { if(e.target === document.getElementById('modal')) hideModal(); });
+    document.getElementById('refreshBtn').addEventListener('click', refreshHome);
+    document.getElementById('drawFortuneBtn').addEventListener('click', e => { e.stopPropagation(); drawFortune(); });
+    document.getElementById('fortuneCard').addEventListener('click', drawFortune);
+    document.getElementById('submitWishBtn').addEventListener('click', () => { addWish(document.getElementById('wishInput').value); document.getElementById('wishInput').value = ''; });
+    document.getElementById('refreshJinangBtn')?.addEventListener('click', updateJinang);
+    document.querySelectorAll('.jinang-category').forEach(el => { el.addEventListener('click', () => showCategoryJinang(el.dataset.type)); });
+    document.querySelectorAll('.tab-item').forEach(tab => { tab.addEventListener('click', () => switchToPage(tab.dataset.page)); });
+    
+    // 初始化
+    document.getElementById('signCount').innerHTML = signCount + '天';
+    updateClock(); setInterval(updateClock, 1000);
+    fetchWeather(); fetchQuote(); updateHomeLuck(); updateFortune();
+    updateAlmanac(); updateJinang(); renderWishList();
+</script>
+</body>
+</html>
